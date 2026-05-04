@@ -14,19 +14,19 @@ import os
 
 # -- connection ----------------------------------------------
 
-_HERE   = os.path.dirname(os.path.abspath(__FILE__))
+_HERE   = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.normpath(os.environ.get("DATABASE_PATH", os.path.join(_HERE, "..", "instance", "tales_of_time.db")))
 
 
-def get_db() -> sqlite3.connection:
+def get_db() -> sqlite3.Connection:
   conn = sqlite3.connect(DB_PATH)
-  conn.row_factory = sqlite3.row
+  conn.row_factory = sqlite3.Row
   conn.execute("PRAGMA foreign_keys = ON")
   return conn
 
--- — Schema DDL —
--- Each CREATE TABLE statement mirrors the specification exactly.
--- IF NOT EXISTS means this is safe to call on every app start.
+# -- Schema DDL
+# -- Each CREATE TABLE statement mirrors the specification exactly.
+# -- IF NOT EXISTS means this is safe to call on every app start.
 
 _SCHEMA = """
 
