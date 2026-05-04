@@ -11,7 +11,8 @@ No ORM classes, no session management, no db.Model inheritance.
 
 import sqlite3
 import os
-
+from flask_sqlalchemy import SQLAlchemy
+from extensions import db
 # -- connection ----------------------------------------------
 
 _HERE   = os.path.dirname(os.path.abspath(__file__))
@@ -28,101 +29,176 @@ def get_db() -> sqlite3.Connection:
 # -- Each CREATE TABLE statement mirrors the specification exactly.
 # -- IF NOT EXISTS means this is safe to call on every app start.
 
-_SCHEMA = """
+# _SCHEMA = """
 
--- — Lookup / Reference tables —
+# -- — Lookup / Reference tables —
 
-CREATE TABLE IF NOT EXISTS CharacterClass (
-    ClassID INTEGER PRIMARY KEY AUTOINCREMENT,
-    ClassName VARCHAR(50) NOT NULL UNIQUE,
-    Description TEXT
-);
+# CREATE TABLE IF NOT EXISTS CharacterClass (
+#     ClassID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     ClassName VARCHAR(50) NOT NULL UNIQUE,
+#     Description TEXT
+# );
 
-CREATE TABLE IF NOT EXISTS Species (
-    SpeciesID INTEGER PRIMARY KEY AUTOINCREMENT,
-    SpeciesName VARCHAR(50) NOT NULL UNIQUE
-);
+# CREATE TABLE IF NOT EXISTS Species (
+#     SpeciesID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     SpeciesName VARCHAR(50) NOT NULL UNIQUE
+# );
 
-CREATE TABLE IF NOT EXISTS Alignment (
-    AlignmentID INTEGER PRIMARY KEY AUTOINCREMENT,
-    AlignmentName VARCHAR(50) NOT NULL UNIQUE
-);
+# CREATE TABLE IF NOT EXISTS Alignment (
+#     AlignmentID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     AlignmentName VARCHAR(50) NOT NULL UNIQUE
+# );
 
-CREATE TABLE IF NOT EXISTS ItemType (
-    ItemTypeID INTEGER PRIMARY KEY AUTOINCREMENT,
-    TypeName VARCHAR(50) NOT NULL UNIQUE
-);
+# CREATE TABLE IF NOT EXISTS ItemType (
+#     ItemTypeID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     TypeName VARCHAR(50) NOT NULL UNIQUE
+# );
 
-CREATE TABLE IF NOT EXISTS Rarity (
-    RarityID INTEGER PRIMARY KEY AUTOINCREMENT,
-    RarityName VARCHAR(50) NOT NULL UNIQUE
-);
+# CREATE TABLE IF NOT EXISTS Rarity (
+#     RarityID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     RarityName VARCHAR(50) NOT NULL UNIQUE
+# );
 
-CREATE TABLE IF NOT EXISTS Region (
-    RegionID INTEGER PRIMARY KEY AUTOINCREMENT,
-    RegionName VARCHAR(100) NOT NULL UNIQUE
-);
+# CREATE TABLE IF NOT EXISTS Region (
+#     RegionID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     RegionName VARCHAR(100) NOT NULL UNIQUE
+# );
 
-CREATE TABLE IF NOT EXISTS Difficulty (
-    DifficultyID INTEGER PRIMARY KEY AUTOINCREMENT,
-    DifficultyName VARCHAR(50) NOT NULL UNIQUE
-);
+# CREATE TABLE IF NOT EXISTS Difficulty (
+#     DifficultyID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     DifficultyName VARCHAR(50) NOT NULL UNIQUE
+# );
 
--- — Core entities —
+# -- — Core entities —
 
-CREATE TABLE IF NOT EXISTS Character (
-    CharacterID INTEGER PRIMARY KEY AUTOINCREMENT,
-    CharacterName VARCHAR(100) NOT NULL,
-    ClassID INTEGER NOT NULL,
-    SpeciesID INTEGER NOT NULL,
-    AlignmentID INTEGER NOT NULL,
-    Level INTEGER NOT NULL DEFAULT 1,
-    FOREIGN KEY (ClassID) REFERENCES CharacterClass(ClassID),
-    FOREIGN KEY (SpeciesID) REFERENCES Species(SpeciesID),
-    FOREIGN KEY (AlignmentID) REFERENCES Alignment(AlignmentID)
-);
+# CREATE TABLE IF NOT EXISTS Character (
+#     CharacterID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     CharacterName VARCHAR(100) NOT NULL,
+#     ClassID INTEGER NOT NULL,
+#     SpeciesID INTEGER NOT NULL,
+#     AlignmentID INTEGER NOT NULL,
+#     Level INTEGER NOT NULL DEFAULT 1,
+#     FOREIGN KEY (ClassID) REFERENCES CharacterClass(ClassID),
+#     FOREIGN KEY (SpeciesID) REFERENCES Species(SpeciesID),
+#     FOREIGN KEY (AlignmentID) REFERENCES Alignment(AlignmentID)
+# );
 
-CREATE TABLE IF NOT EXISTS Item (
-    ItemID INTEGER PRIMARY KEY AUTOINCREMENT,
-    ItemName VARCHAR(100) NOT NULL,
-    ItemTypeID INTEGER NOT NULL,
-    RarityID INTEGER NOT NULL,
-    FOREIGN KEY (ItemTypeID) REFERENCES ItemType(ItemTypeID),
-    FOREIGN KEY (RarityID) REFERENCES Rarity(RarityID)
-);
+# CREATE TABLE IF NOT EXISTS Item (
+#     ItemID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     ItemName VARCHAR(100) NOT NULL,
+#     ItemTypeID INTEGER NOT NULL,
+#     RarityID INTEGER NOT NULL,
+#     FOREIGN KEY (ItemTypeID) REFERENCES ItemType(ItemTypeID),
+#     FOREIGN KEY (RarityID) REFERENCES Rarity(RarityID)
+# );
 
-CREATE TABLE IF NOT EXISTS Quest (
-    QuestID INTEGER PRIMARY KEY AUTOINCREMENT,
-    QuestName VARCHAR(100) NOT NULL,
-    RegionID INTEGER NOT NULL,
-    DifficultyID INTEGER NOT NULL,
-    FOREIGN KEY (RegionID) REFERENCES Region(RegionID),
-    FOREIGN KEY (DifficultyID) REFERENCES Difficulty(DifficultyID)
-);
+# CREATE TABLE IF NOT EXISTS Quest (
+#     QuestID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     QuestName VARCHAR(100) NOT NULL,
+#     RegionID INTEGER NOT NULL,
+#     DifficultyID INTEGER NOT NULL,
+#     FOREIGN KEY (RegionID) REFERENCES Region(RegionID),
+#     FOREIGN KEY (DifficultyID) REFERENCES Difficulty(DifficultyID)
+# );
 
--- — Join tables —
+# -- — Join tables —
 
-CREATE TABLE IF NOT EXISTS Inventory (
-    InventoryID INTEGER PRIMARY KEY AUTOINCREMENT,
-    CharacterID INTEGER NOT NULL,
-    ItemID INTEGER NOT NULL,
-    Quantity INTEGER NOT NULL DEFAULT 1,
-    FOREIGN KEY (CharacterID) REFERENCES Character(CharacterID),
-    FOREIGN KEY (ItemID) REFERENCES Item(ItemID)
-);
+# CREATE TABLE IF NOT EXISTS Inventory (
+#     InventoryID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     CharacterID INTEGER NOT NULL,
+#     ItemID INTEGER NOT NULL,
+#     Quantity INTEGER NOT NULL DEFAULT 1,
+#     FOREIGN KEY (CharacterID) REFERENCES Character(CharacterID),
+#     FOREIGN KEY (ItemID) REFERENCES Item(ItemID)
+# );
 
-CREATE TABLE IF NOT EXISTS CharacterQuest (
-    CharacterQuestID INTEGER PRIMARY KEY AUTOINCREMENT,
-    CharacterID INTEGER NOT NULL,
-    QuestID INTEGER NOT NULL,
-    CompletionDate DATETIME,
-    FOREIGN KEY (CharacterID) REFERENCES Character(CharacterID),
-    FOREIGN KEY (QuestID) REFERENCES Quest(QuestID)
-);
+# CREATE TABLE IF NOT EXISTS CharacterQuest (
+#     CharacterQuestID INTEGER PRIMARY KEY AUTOINCREMENT,
+#     CharacterID INTEGER NOT NULL,
+#     QuestID INTEGER NOT NULL,
+#     CompletionDate DATETIME,
+#     FOREIGN KEY (CharacterID) REFERENCES Character(CharacterID),
+#     FOREIGN KEY (QuestID) REFERENCES Quest(QuestID)
+# );
 
-"""
+# """
 
-def init_db() -> None:
-  with get_db() as conn:
-    conn.executescript(_SCHEMA)
-    conn.commit()
+# — Lookup / Reference tables —
+
+class CharacterClass(db.Model):
+    __tablename__ = 'CharacterClass'
+    ClassID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    ClassName = db.Column(db.String(50), nullable=False, unique=True)
+    Description = db.Column(db.Text)
+
+class Species(db.Model):
+    __tablename__ = 'Species'
+    SpeciesID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    SpeciesName = db.Column(db.String(50), nullable=False, unique=True)
+
+class Alignment(db.Model):
+    __tablename__ = 'Alignment'
+    AlignmentID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    AlignmentName = db.Column(db.String(50), nullable=False, unique=True)
+
+class ItemType(db.Model):
+    __tablename__ = 'ItemType'
+    ItemTypeID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    TypeName = db.Column(db.String(50), nullable=False, unique=True)
+
+class Rarity(db.Model):
+    __tablename__ = 'Rarity'
+    RarityID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    RarityName = db.Column(db.String(50), nullable=False, unique=True)
+
+class Region(db.Model):
+    __tablename__ = 'Region'
+    RegionID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    RegionName = db.Column(db.String(100), nullable=False, unique=True)
+
+class Difficulty(db.Model):
+    __tablename__ = 'Difficulty'
+    DifficultyID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    DifficultyName = db.Column(db.String(50), nullable=False, unique=True)
+
+# — Core entities —
+
+class Character(db.Model):
+    __tablename__ = 'Character'
+    CharacterID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    CharacterName = db.Column(db.String(100), nullable=False)
+    ClassID = db.Column(db.Integer, db.ForeignKey('CharacterClass.ClassID'), nullable=False)
+    SpeciesID = db.Column(db.Integer, db.ForeignKey('Species.SpeciesID'), nullable=False)
+    AlignmentID = db.Column(db.Integer, db.ForeignKey('Alignment.AlignmentID'), nullable=False)
+    Level = db.Column(db.Integer, default=1, nullable=False)
+
+class Item(db.Model):
+    __tablename__ = 'Item'
+    ItemID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    ItemName = db.Column(db.String(100), nullable=False)
+    ItemTypeID = db.Column(db.Integer, db.ForeignKey('ItemType.ItemTypeID'), nullable=False)
+    RarityID = db.Column(db.Integer, db.ForeignKey('Rarity.RarityID'), nullable=False)
+
+class Quest(db.Model):
+    __tablename__ = 'Quest'
+    QuestID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    QuestName = db.Column(db.String(100), nullable=False)
+    RegionID = db.Column(db.Integer, db.ForeignKey('Region.RegionID'), nullable=False)
+    DifficultyID = db.Column(db.Integer, db.ForeignKey('Difficulty.DifficultyID'), nullable=False)
+
+# — Join tables —
+
+class Inventory(db.Model):
+    __tablename__ = 'Inventory'
+    InventoryID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    CharacterID = db.Column(db.Integer, db.ForeignKey('Character.CharacterID'), nullable=False)
+    ItemID = db.Column(db.Integer, db.ForeignKey('Item.ItemID'), nullable=False)
+    Quantity = db.Column(db.Integer, default=1, nullable=False)
+
+class CharacterQuest(db.Model):
+    __tablename__ = 'CharacterQuest'
+    CharacterQuestID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    CharacterID = db.Column(db.Integer, db.ForeignKey('Character.CharacterID'), nullable=False)
+    QuestID = db.Column(db.Integer, db.ForeignKey('Quest.QuestID'), nullable=False)
+    CompletionDate = db.Column(db.DateTime)
+
